@@ -1,0 +1,37 @@
+diff --git a/Android.mk b/Android.mk
+index 383adca..270204d 100644
+--- a/Android.mk
++++ b/Android.mk
+@@ -305,6 +305,9 @@ endif
+ ifeq ($(TW_NO_SCREEN_BLANK), true)
+     LOCAL_CFLAGS += -DTW_NO_SCREEN_BLANK
+ endif
++ifeq ($(TW_F2FS_NO_EXTRA_FEATURES), true)
++    LOCAL_CFLAGS += -DTW_F2FS_NO_EXTRA_FEATURES
++endif
+ ifeq ($(TW_SDEXT_NO_EXT4), true)
+     LOCAL_CFLAGS += -DTW_SDEXT_NO_EXT4
+ endif
+diff --git a/partition.cpp b/partition.cpp
+index 184cb16..9cd9f03 100755
+--- a/partition.cpp
++++ b/partition.cpp
+@@ -2541,14 +2541,18 @@ bool TWPartition::Wipe_F2FS() {
+ 	char dev_sz_str[48];
+ 	sprintf(dev_sz_str, "%llu", (dev_sz / 4096));
+ 
++#ifndef TW_F2FS_NO_EXTRA_FEATURES
+ 	// Project ID
+ 	f2fs_command += " -O project_quota,extra_attr";
++#endif
+ 
+ 	if(needs_casefold)
+ 		f2fs_command += " -O casefold -C utf8";
+ 
++#ifndef TW_F2FS_NO_EXTRA_FEATURES
+ 	if (Needs_Fs_Compress)
+ 		f2fs_command += " -O compression,extra_attr";
++#endif
+ 
+ 	f2fs_command += " " + Actual_Block_Device + " " + dev_sz_str;
+ 
