@@ -8,3 +8,7 @@ PRODUCT_NAME := twrp_AGS2
 PRODUCT_BRAND := HUAWEI
 PRODUCT_MODEL := MediaPad T5
 PRODUCT_MANUFACTURER := HUAWEI
+
+# Stock teecd / keymaster 3.0 HAL (from recovery_vendor) were built for the A9 userspace. recovery/root/system/lib64 carries what they
+# link and this ramdisk lacks: libc_secshared, libkeymaster1, libsoftkeymasterdevice, libkeymaster_messages (stock, self-contained) and
+# android.hardware.keymaster@3.0 (built from hardware/interfaces in this tree; A9's copy needs libhwbinder, which A12 no longer has).

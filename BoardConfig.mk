@@ -85,3 +85,4 @@ TW_USE_NEW_MINADBD := true
 
 # SELinux: extra rules for the recovery policy (the recovery boots enforcing on a stock kernel)
 BOARD_SEPOLICY_DIRS += $(DEVICE_PATH)/sepolicy
+

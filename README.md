@@ -25,3 +25,12 @@ No crypto stack is built (the LineageOS install on this tablet is not encrypted)
   Quick policy loop: `mka sepolicy.recovery`, push `recovery/root/sepolicy`, `load_policy` on the device, `setenforce 1`, read `dmesg | grep avc`.
 * The stock teecd/keymaster services cannot link against this Android 12 userspace (they respawn every 5 s); the rc stops them.
 
+
+## v10-v12 notes
+- Touch: `huawei,ts_kit` registers `/dev/input/event3` in the same second as recovery's `ev_init()`, and recovery only rescans `/dev/input`
+  when the directory mtime grows, so it never opened the touchscreen (no touch at all, so no wake). `twrp_input_rescan.sh` touches a temp
+  file in `/dev/input` once event3 exists.
+- `teecd` and `keymaster-3-0` are defined in `init.recovery.hi6250.rc` (the stock recovery_vendor rc only `start`s them) and kept running for
+  later /data decryption. They need `libc_secshared`, `libkeymaster1`, `libsoftkeymasterdevice`, `libkeymaster_messages` (stock) and an
+  A12-built `android.hardware.keymaster@3.0` (A9's needs libhwbinder), all shipped in `recovery/root/system/lib64`.
+- SELinux: with `setenforce 1` the only remaining denials come from ad-hoc `ps`/`dmesg` shells.

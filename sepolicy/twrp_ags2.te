@@ -26,4 +26,16 @@ recovery_only(`
   # dmesg and module autoload
   allow recovery self:capability2 syslog;
   allow recovery kernel:system { syslog_read module_request };
-')
+'
+
+# twrp_input_rescan.sh (bumps /dev/input mtime) and the boot-time kmsg marker
+allow recovery input_device:dir { write add_name remove_name search };
+allow recovery input_device:file { create unlink write getattr setattr open };
+allow recovery kmsg_device:chr_file rw_file_perms;
+allow recovery self:netlink_kobject_uevent_socket read;
+allow recovery aac_drc_prop:file { open read getattr map };
+allow hal_keymaster_default self:capability sys_resource;
+allow ueventd self:capability sys_nice;
+allow kernel device:dir write;
+allow init kernel:system module_request;
+)

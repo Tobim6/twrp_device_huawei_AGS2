@@ -19,22 +19,33 @@ on init
     write /dev/kmsg "twrp: init reached"
     start twrp_cache_log
 
+on init
+    start twrp_input_rescan
+
+service twrp_input_rescan /system/bin/sh /system/bin/twrp_input_rescan.sh
+    user root
+    group root
+    disabled
+    oneshot
+    seclabel u:r:recovery:s0
+
 service twrp_cache_log /system/bin/sh /system/bin/twrp_cache_log.sh
     user root
     group root
     disabled
     seclabel u:r:recovery:s0
 
-# The stock Huawei recovery_vendor image is unpacked over this ramdisk; its teecd and keymaster HAL were built for the old Android 9
-# userspace ("CANNOT LINK ... libc_secshared.so / android.hardware.keymaster@3.0.so not found") and would respawn every 5 s. They are
-# only needed to decrypt /data, which this install does not use.
-# (The stock rc starts them after this file's actions have run, so stop them whenever they drop into the restart state too.)
-on boot
-    stop teecd
-    stop keymaster-3-0
+# Started from the stock recovery_vendor rc (`start keymaster-3-0` / `start teecd`), which does not define them. Kept running for /data
+# decryption (libs they need are in system/lib64, see twrp_AGS2.mk).
+service teecd /vendor/bin/teecd
+    user root
+    group root
+    disabled
+    seclabel u:r:tee:s0
 
-on property:init.svc.teecd=restarting
-    stop teecd
-
-on property:init.svc.keymaster-3-0=restarting
-    stop keymaster-3-0
+service keymaster-3-0 /vendor/bin/hw/android.hardware.keymaster@3.0-service
+    class early_hal
+    user root
+    group root
+    disabled
+    seclabel u:r:hal_keymaster_default:s0
