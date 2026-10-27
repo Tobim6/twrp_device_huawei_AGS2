@@ -49,3 +49,7 @@ Enable with `TW_INCLUDE_CRYPTO` (default; `AGS2_NO_CRYPTO=true` builds without).
 - `/dev/tc_ns_client` labelled `tee_client_device`.
 - `patches/bootable_recovery-f2fs-no-extra-features.patch` / `TW_F2FS_NO_EXTRA_FEATURES`: never format /data with extra_attr (kernel panic).
 Debug aids shipped: logd, logcat, strace.
+- `patches/system_vold-legacy-keystore-fallback.patch`: an Android 9 ROM keeps the locksettings key as a Keystore 1 file
+  (`/data/misc/keystore/user_0/1000_USRPKEY_synthetic_password_*`); copy those files (never touch the originals) into keystore2's working dir
+  as uid 0 entries and look the key up as an app key if the Android 12 style SELinux-namespace lookup misses.
+Result: "User 0 Decrypted Successfully" on a ROM with FBE (fileencryption=aes-256-xts:aes-256-cts) /data.
