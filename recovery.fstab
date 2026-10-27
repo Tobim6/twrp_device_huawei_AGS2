@@ -1,13 +1,11 @@
 # Android-style fstab for libfs_mgr (init/recovery libraries). TWRP itself reads the full table from /etc/twrp.fstab.
 /dev/block/bootdevice/by-name/cache	/cache	ext4	defaults	defaults
-/dev/block/bootdevice/by-name/cust	/cust	ext4	defaults	defaults
 /dev/block/bootdevice/by-name/userdata	/data	f2fs	nosuid,nodev,noatime	wait,fileencryption=aes-256-xts:aes-256-cts
 /dev/block/bootdevice/by-name/odm	/odm	ext4	defaults	defaults
 /dev/block/bootdevice/by-name/kernel	/kernel	emmc	defaults	defaults
 /dev/block/bootdevice/by-name/ramdisk	/ramdisk	emmc	defaults	defaults
 /dev/block/bootdevice/by-name/system	/system	ext4	defaults	defaults
 /dev/block/bootdevice/by-name/vendor	/vendor	ext4	defaults	defaults
-/dev/block/bootdevice/by-name/version	/version	ext4	defaults	defaults
 /dev/block/bootdevice/by-name/erecovery_ramdisk	/erecovery_ramdisk	emmc	defaults	defaults
 /dev/block/bootdevice/by-name/erecovery_kernel	/erecovery_kernel	emmc	defaults	defaults
 /dev/block/bootdevice/by-name/erecovery_vbmeta	/erecovery_vbmeta	emmc	defaults	defaults
