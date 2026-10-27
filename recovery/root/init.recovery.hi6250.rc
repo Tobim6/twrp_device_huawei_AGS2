@@ -2,9 +2,34 @@ import /init.recovery.hi6250.usb.rc
 
 # This kernel only has the configfs USB gadget; the usb rc is gated on these (the working prague TWRP set them in prop.default)
 on early-init
+    write /proc/sys/kernel/printk "8 4 1 7"
     setprop sys.usb.configfs 1
-    setprop sys.usb.controller ff100000.dwc3
+    setprop sys.usb.controller hisi-usb-otg
 
 # recovery.fstab and the by-name links use /dev/block/bootdevice
 on init
     symlink /dev/block/platform/hi_mci.0 /dev/block/bootdevice
+    # This device's device-tree fstab (/proc/device-tree/firmware/android/fstab) lists every partition as "/by-name/<x>" (the
+    # platform prefix is normally added by first-stage mount, which recovery skips). libfs_mgr is read first by init and by
+    # recovery's bootloader_message code, so without this /misc cannot be opened: the BCB is never cleared (the Huawei bootloader
+    # then keeps booting recovery) and init cannot write bootonce-bootloader.
+    symlink /dev/block/bootdevice/by-name /by-name
+
+# Boot diagnostics into /cache/twrp_log (see system/bin/twrp_cache_log.sh)
+on init
+    write /dev/kmsg "twrp: init reached"
+    start twrp_cache_log
+
+service twrp_cache_log /system/bin/sh /system/bin/twrp_cache_log.sh
+    user root
+    group root
+    disabled
+    seclabel u:r:recovery:s0
+
+# USB debugging: every change of the usb properties is written to the kernel log together with the gadget state
+on property:sys.usb.config=*
+    write /dev/kmsg "twrpdbg: sys.usb.config=${sys.usb.config} configfs=${sys.usb.configfs} controller=${sys.usb.controller}"
+
+on property:sys.usb.ffs.ready=*
+    write /dev/kmsg "twrpdbg: sys.usb.ffs.ready=${sys.usb.ffs.ready} config=${sys.usb.config}"
+    exec u:r:recovery:s0 root root -- /system/bin/sh /system/bin/twrp_usb_dbg.sh
