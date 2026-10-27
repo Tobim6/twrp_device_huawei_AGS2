@@ -13,7 +13,7 @@ while [ ! -e $SYS ] && [ $i -lt 100 ]; do sleep 0.2; i=$((i+1)); done
 get() { sed -n "s/^$2=//p" "$1" | head -n 1; }
 
 mkdir -p $M
-if mount -t ext4 -o ro $SYS $M 2>/dev/null; then
+if mount -o ro $SYS $M 2>/dev/null; then
     f=$M/build.prop
     [ -f $f ] || f=$M/system/build.prop
     rel=$(get $f ro.build.version.release)
@@ -21,7 +21,7 @@ if mount -t ext4 -o ro $SYS $M 2>/dev/null; then
     umount $M
 fi
 vspl=
-if [ -e $VEN ] && mount -t ext4 -o ro $VEN $M 2>/dev/null; then
+if [ -e $VEN ] && mount -o ro $VEN $M 2>/dev/null; then
     vspl=$(get $M/build.prop ro.vendor.build.security_patch)
     umount $M
 fi

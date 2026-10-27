@@ -53,3 +53,8 @@ Debug aids shipped: logd, logcat, strace.
   (`/data/misc/keystore/user_0/1000_USRPKEY_synthetic_password_*`); copy those files (never touch the originals) into keystore2's working dir
   as uid 0 entries and look the key up as an app key if the Android 12 style SELinux-namespace lookup misses.
 Result: "User 0 Decrypted Successfully" on a ROM with FBE (fileencryption=aes-256-xts:aes-256-cts) /data.
+- `patches/bootable_recovery-fbdev-bgra-no-inplace-swap.patch`: with RECOVERY_BGRA, fbdev_flip() swapped R/B in place on the persistent draw surface, so a
+  page re-flipped without a full redraw (the password page) alternated between correct and swapped colours every frame. Swap while copying instead.
+- Android 13 ROMs: nothing here depends on the ROM's Android version (props and filesystem type are read from the ROM, both the Android 12+
+  locksettings key lookup and the Keystore 1 fallback exist). Untested: no Android 13 ROM was available. The kernel is 4.4, so such a ROM is limited to
+  fscrypt v1 (no metadata encryption / v2 policies), which is what this recovery's fstab expects.

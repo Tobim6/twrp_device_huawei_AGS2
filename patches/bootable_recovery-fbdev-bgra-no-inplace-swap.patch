@@ -1,0 +1,53 @@
+diff --git a/minuitwrp/graphics_fbdev.cpp b/minuitwrp/graphics_fbdev.cpp
+index 499e0ea..cd742f2 100644
+--- a/minuitwrp/graphics_fbdev.cpp
++++ b/minuitwrp/graphics_fbdev.cpp
+@@ -282,27 +282,30 @@ static GRSurface* fbdev_init(minui_backend* backend) {
+     return gr_draw;
+ }
+ 
+-static GRSurface* fbdev_flip(minui_backend* backend __unused) {
+ #if defined(RECOVERY_BGRA)
+-    // In case of BGRA, do some byte swapping
+-    unsigned char* ucfb_vaddr = (unsigned char*)gr_draw->data;
+-    for (int idx = 0 ; idx < (gr_draw->height * gr_draw->row_bytes);
+-            idx += 4) {
+-        unsigned char tmp = ucfb_vaddr[idx];
+-        ucfb_vaddr[idx    ] = ucfb_vaddr[idx + 2];
+-        ucfb_vaddr[idx + 2] = tmp;
++// Copy gr_draw into the framebuffer swapping R and B. This must not modify gr_draw itself: a page that is flipped repeatedly without being
++// fully redrawn (e.g. the password/pattern page) would otherwise have its colours swapped back and forth on every flip.
++static void copy_swapped_rb(unsigned char* dst, const unsigned char* src, size_t len) {
++    for (size_t idx = 0; idx + 3 < len; idx += 4) {
++        dst[idx]     = src[idx + 2];
++        dst[idx + 1] = src[idx + 1];
++        dst[idx + 2] = src[idx];
++        dst[idx + 3] = src[idx + 3];
+     }
++}
+ #endif
+-    if (double_buffered) {
+-        // Copy from the in-memory surface to the framebuffer.
+-        memcpy(gr_framebuffer[1-displayed_buffer].data, gr_draw->data,
+-               gr_draw->height * gr_draw->row_bytes);
+-        set_displayed_framebuffer(1-displayed_buffer);
+-    } else {
+-        // Copy from the in-memory surface to the framebuffer.
+-        memcpy(gr_framebuffer[0].data, gr_draw->data,
+-               gr_draw->height * gr_draw->row_bytes);
+-    }
++
++static GRSurface* fbdev_flip(minui_backend* backend __unused) {
++    unsigned char* dst = gr_framebuffer[double_buffered ? 1 - displayed_buffer : 0].data;
++    size_t len = gr_draw->height * gr_draw->row_bytes;
++#if defined(RECOVERY_BGRA)
++    copy_swapped_rb(dst, gr_draw->data, len);
++#else
++    // Copy from the in-memory surface to the framebuffer.
++    memcpy(dst, gr_draw->data, len);
++#endif
++    if (double_buffered)
++        set_displayed_framebuffer(1 - displayed_buffer);
+     return gr_draw;
+ }
+ 
