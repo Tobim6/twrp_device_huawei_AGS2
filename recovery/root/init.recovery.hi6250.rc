@@ -1,0 +1,10 @@
+import /init.recovery.hi6250.usb.rc
+
+# This kernel only has the configfs USB gadget; the usb rc is gated on these (the working prague TWRP set them in prop.default)
+on early-init
+    setprop sys.usb.configfs 1
+    setprop sys.usb.controller ff100000.dwc3
+
+# recovery.fstab and the by-name links use /dev/block/bootdevice
+on init
+    symlink /dev/block/platform/hi_mci.0 /dev/block/bootdevice
