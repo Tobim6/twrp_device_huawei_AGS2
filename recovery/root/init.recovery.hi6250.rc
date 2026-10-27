@@ -4,6 +4,8 @@ import /init.recovery.hi6250.usb.rc
 on early-init
     setprop sys.usb.configfs 1
     setprop sys.usb.controller hisi-usb-otg
+    # recovery's vold/keystore code reports errors only through liblog
+    start logd
 
 # recovery.fstab and the by-name links use /dev/block/bootdevice
 on init
@@ -17,12 +19,22 @@ on init
 # Boot diagnostics into /cache/twrp_log (see system/bin/twrp_cache_log.sh)
 on init
     write /dev/kmsg "twrp: init reached"
+    # fscrypt v1 (this 4.4 kernel has no FS_IOC_ADD_ENCRYPTION_KEY): vold needs the "fscrypt" keyring in the session keyring
+    install_keyring
+    exec_start twrp_rom_props
     start twrp_cache_log
 
 on init
     start twrp_input_rescan
 
 service twrp_input_rescan /system/bin/sh /system/bin/twrp_input_rescan.sh
+    user root
+    group root
+    disabled
+    oneshot
+    seclabel u:r:recovery:s0
+
+service twrp_rom_props /system/bin/sh /system/bin/twrp_rom_props.sh
     user root
     group root
     disabled
@@ -49,3 +61,28 @@ service keymaster-3-0 /vendor/bin/hw/android.hardware.keymaster@3.0-service
     group root
     disabled
     seclabel u:r:hal_keymaster_default:s0
+
+# Gatekeeper HAL (TEE-backed), needed to verify the user's pattern/PIN for FBE decryption. Same binaries as the ROM's vendor partition.
+# libteec talks to two daemons (@tc_ns_socket = teecd, @tc_ns_socket_system = system_teecd) and the daemons authenticate the calling CA by
+# uid, so this must run as system exactly like the ROM's rc does (as root teecd just closes the connection).
+service system_teecd /system/bin/system_teecd
+    socket tui_daemon stream 660 root system
+    socket tee-multi-user stream 660 root system
+    class early_hal
+    user root
+    group root readproc
+    seclabel u:r:tee:s0
+    disabled
+
+service gatekeeper-1-0 /vendor/bin/hw/android.hardware.gatekeeper@1.0-service
+    class early_hal
+    user system
+    group system
+    seclabel u:r:hal_gatekeeper_default:s0
+    disabled
+
+on boot
+    chown system system /dev/tc_ns_client
+    chmod 0660 /dev/tc_ns_client
+    start system_teecd
+    start gatekeeper-1-0

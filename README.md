@@ -34,3 +34,18 @@ No crypto stack is built (the LineageOS install on this tablet is not encrypted)
   later /data decryption. They need `libc_secshared`, `libkeymaster1`, `libsoftkeymasterdevice`, `libkeymaster_messages` (stock) and an
   A12-built `android.hardware.keymaster@3.0` (A9's needs libhwbinder), all shipped in `recovery/root/system/lib64`.
 - SELinux: with `setenforce 1` the only remaining denials come from ad-hoc `ps`/`dmesg` shells.
+
+## FBE decryption of the ROM's /data (v13-v21)
+Enable with `TW_INCLUDE_CRYPTO` (default; `AGS2_NO_CRYPTO=true` builds without). Everything below was needed on this 4.4 kernel / A9 ROM:
+- `fileencryption=aes-256-xts:aes-256-cts:v1` in the recovery fstabs: the kernel only has the legacy v1 key API (no FS_IOC_ADD_ENCRYPTION_KEY).
+- `install_keyring` in the rc: vold's legacy path needs the "fscrypt" keyring in the session keyring.
+- `recovery/root/system/etc/vintf/manifest.xml`: servicemanager refuses to register keystore2 without a framework manifest declaring it.
+- `patches/system_security-keystore2-recovery-sid.patch`: this kernel's binder has no BINDER_FLAG_TXN_SECURITY_CTX, so keystore2 never gets a
+  calling SID and fails every permission check; fall back to the recovery context.
+- `twrp_rom_props.sh`: soft keymaster rejects blobs newer than its configured OS version / patch level, and the stock recovery_vendor props say
+  8.0.0 / 2020-08-01; copy the ROM's values (and restart the HAL) early in boot.
+- keymaster 3.0 HAL (stock vendor) + A12-built `android.hardware.keymaster@3.0`; gatekeeper HAL + `system_teecd` + libteec/libtuidaemon/libxml2.
+  libteec connects to teecd and system_teecd, which authenticate the caller by uid, so the gatekeeper HAL must run as `system`.
+- `/dev/tc_ns_client` labelled `tee_client_device`.
+- `patches/bootable_recovery-f2fs-no-extra-features.patch` / `TW_F2FS_NO_EXTRA_FEATURES`: never format /data with extra_attr (kernel panic).
+Debug aids shipped: logd, logcat, strace.

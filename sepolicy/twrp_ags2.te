@@ -9,7 +9,7 @@ type hwlog_device, dev_type;
 recovery_only(`
   # --- the stock Huawei recovery_vendor image is unpacked into the same initramfs; its services (teecd, keymaster HAL) are files
   #     on rootfs that init starts with their vendor domains.
-  allow { tee hal_keymaster_default } rootfs:file { entrypoint execute read open getattr map };
+  allow { tee hal_keymaster_default hal_gatekeeper_default } rootfs:file { entrypoint execute read open getattr map };
   allow { tee hal_keymaster_default } rootfs:dir r_dir_perms;
   allow { tee hal_keymaster_default } rootfs:lnk_file r_file_perms;
 
@@ -37,17 +37,17 @@ allow recovery input_device:file { create unlink write getattr setattr open };
 allow recovery kmsg_device:chr_file rw_file_perms;
 allow recovery self:netlink_kobject_uevent_socket read;
 allow recovery aac_drc_prop:file { open read getattr map };
-allow hal_keymaster_default self:capability sys_resource;
+allow { hal_keymaster_default hal_gatekeeper_default } self:capability sys_resource;
 allow ueventd self:capability sys_nice;
 allow kernel device:dir write;
 allow init kernel:system module_request;
 
 # Huawei TEE client device (was plain "device", so teecd could not open it once the kernel is really enforcing)
-allow tee tee_client_device:chr_file rw_file_perms;
+allow { tee hal_gatekeeper_default } tee_client_device:chr_file rw_file_perms;
 
 # keymaster HAL <-> the processes hosting hwservicemanager/keystore2 (labelled recovery here)
-allow hal_keymaster_default recovery:binder { call transfer };
-allow recovery hal_keymaster_default:binder { call transfer };
+allow { hal_keymaster_default hal_gatekeeper_default } recovery:binder { call transfer };
+allow recovery { hal_keymaster_default hal_gatekeeper_default }:binder { call transfer };
 
 # kernel-thread / init / modprobe accesses seen on a genuinely enforcing boot
 allow kernel block_device:dir search;
