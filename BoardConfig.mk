@@ -88,7 +88,9 @@ BOARD_SEPOLICY_DIRS += $(DEVICE_PATH)/sepolicy
 
 
 # Decryption of the ROM's FBE /data (fstab.hi6250 fileencryption=aes-256-xts:aes-256-cts, keys wrapped by the Huawei keymaster 3.0 HAL)
+ifneq ($(AGS2_NO_CRYPTO),true)
 TW_INCLUDE_CRYPTO := true
+endif
 
 # Linux 4.4 f2fs panics (f2fs_write_cache_pages) on a /data formatted with -O project_quota,extra_attr, which TWRP adds when formatting
 TW_F2FS_NO_EXTRA_FEATURES := true
