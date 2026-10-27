@@ -1,0 +1,29 @@
+# SELinux additions for TWRP on the Huawei MediaPad T5 (AGS2).
+#
+# TWRP's own policy (bootable/recovery/sepolicy/twrp.te) makes recovery, init, logd, adbd, fastbootd and ueventd permissive, which
+# is what lets TWRP work on a kernel that boots enforcing. The rules below (a) let the domains that are NOT permissive work, and
+# (b) grant what TWRP really does so a boot with SELinux enforcing produces no denials even if a domain is later made enforcing.
+recovery_only(`
+  # --- the stock Huawei recovery_vendor image is unpacked into the same initramfs; its services (teecd, keymaster HAL) are files
+  #     on rootfs that init starts with their vendor domains.
+  allow { tee hal_keymaster_default } rootfs:file { entrypoint execute read open getattr map };
+  allow { tee hal_keymaster_default } rootfs:dir r_dir_perms;
+  allow { tee hal_keymaster_default } rootfs:lnk_file r_file_perms;
+
+  # --- stock recovery rc run by init as vendor_init
+  allow vendor_init default_prop:file { getattr open read map };
+  allow vendor_init selinuxfs:file rw_file_perms;
+
+  # --- what the TWRP (recovery domain) process does
+  # backlight, temperature and vibrator sysfs nodes
+  allow recovery sysfs:file rw_file_perms;
+  allow recovery sysfs_vibrator:file rw_file_perms;
+  # partition ioctls (size/blksize queries) on block devices
+  allow recovery block_device:blk_file { getattr ioctl read write open };
+  # browsing / backing up / wiping /data and the emulated sdcard
+  allow recovery { system_data_file media_rw_data_file bootchart_data_file recovery_data_file }:dir r_dir_perms;
+  allow recovery { system_data_file media_rw_data_file bootchart_data_file recovery_data_file }:file r_file_perms;
+  # dmesg and module autoload
+  allow recovery self:capability2 syslog;
+  allow recovery kernel:system { syslog_read module_request };
+')

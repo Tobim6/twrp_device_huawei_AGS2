@@ -13,7 +13,7 @@ sync
 n=0
 while true; do
   dmesg > $D/dmesg.tmp 2>&1 && mv $D/dmesg.tmp $D/dmesg.txt
-  { echo "tick $n $(date)"; getprop; } > $D/props.txt 2>&1
+  { echo "tick $n $(date)"; for p in ro.twrp.version ro.hardware ro.boot.hardware sys.usb.config sys.usb.state sys.usb.ffs.ready sys.usb.configfs sys.usb.controller ro.debuggable; do echo "$p=$(getprop $p)"; done; echo "selinux=$(getenforce 2>&1)"; } > $D/props.txt 2>&1
   { ps -A 2>&1 || ps; } > $D/ps.txt 2>&1
   { mount; echo; ls -la /dev/block/bootdevice/ /dev/block/bootdevice/by-name 2>&1; } > $D/mounts.txt 2>&1
   { echo "udc:"; ls /sys/class/udc 2>&1; echo "gadget:"; ls /config/usb_gadget/g1 2>&1; echo "UDC=$(cat /config/usb_gadget/g1/UDC 2>&1)";
@@ -22,5 +22,5 @@ while true; do
   ls -la /dev/graphics /dev/input /sys/class/graphics /sys/class/leds 2>&1 > $D/devices.txt
   sync
   n=$((n+1))
-  if [ $n -lt 100 ]; then sleep 3; else sleep 30; fi
+  if [ $n -lt 60 ]; then sleep 3; else sleep 60; fi
 done

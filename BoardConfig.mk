@@ -75,8 +75,13 @@ TW_INCLUDE_REPACKTOOLS := true
 TW_INCLUDE_RESETPROP := true
 TW_INCLUDE_LIBRESETPROP := true
 TW_SCREEN_BLANK_ON_BOOT := true
-TW_NO_SCREEN_BLANK := false
+# Do not power the panel down (FBIOBLANK): on this tablet that also suspends the touch controller, so a touch could never wake
+# the screen again. With this flag the blank timer only drops the backlight and any touch/key (except power) wakes it.
+TW_NO_SCREEN_BLANK := true
 TW_INPUT_BLACKLIST := "hbtp_vm"
 TW_EXCLUDE_SUPERSU := true
 TW_USE_NEW_MINADBD := true
 # /data is not encrypted on this install (FBE/FDE are disabled), so no crypto stack is built.
+
+# SELinux: extra rules for the recovery policy (the recovery boots enforcing on a stock kernel)
+BOARD_SEPOLICY_DIRS += $(DEVICE_PATH)/sepolicy

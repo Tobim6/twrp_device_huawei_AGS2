@@ -16,3 +16,12 @@ Things that were needed to make it work on this hardware (all in `recovery/root`
 * Services need a `seclabel` (Android 12 init refuses to start them otherwise).
 * `recovery.fstab` (Android format, for libfs_mgr) and `system/etc/twrp.fstab` (TWRP format).
 No crypto stack is built (the LineageOS install on this tablet is not encrypted).
+* `TW_NO_SCREEN_BLANK := true`: without it the blank timer calls FBIOBLANK, the Huawei driver powers the LCD *and the touch controller* down and
+  a touch can never wake the screen again. With it only the backlight drops and any touch/key (except power) wakes it.
+* SELinux (`sepolicy/twrp_ags2.te`, wired with `BOARD_SEPOLICY_DIRS`): TWRP's own policy makes recovery/init/adbd/logd/ueventd permissive; the rules
+  here cover the stock recovery_vendor domains (tee, hal_keymaster_default, vendor_init -- the Huawei bootloader unpacks recovery_vendor into the same
+  initramfs, so their binaries are rootfs files) and what TWRP touches (backlight/vibrator sysfs, block ioctls, /data, dmesg). Booting with
+  `setenforce 1` produces no denials. Android's neverallow rules reject a blanket `property_type` read grant; do not add one.
+  Quick policy loop: `mka sepolicy.recovery`, push `recovery/root/sepolicy`, `load_policy` on the device, `setenforce 1`, read `dmesg | grep avc`.
+* The stock teecd/keymaster services cannot link against this Android 12 userspace (they respawn every 5 s); the rc stops them.
+

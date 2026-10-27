@@ -2,7 +2,6 @@ import /init.recovery.hi6250.usb.rc
 
 # This kernel only has the configfs USB gadget; the usb rc is gated on these (the working prague TWRP set them in prop.default)
 on early-init
-    write /proc/sys/kernel/printk "8 4 1 7"
     setprop sys.usb.configfs 1
     setprop sys.usb.controller hisi-usb-otg
 
@@ -26,10 +25,16 @@ service twrp_cache_log /system/bin/sh /system/bin/twrp_cache_log.sh
     disabled
     seclabel u:r:recovery:s0
 
-# USB debugging: every change of the usb properties is written to the kernel log together with the gadget state
-on property:sys.usb.config=*
-    write /dev/kmsg "twrpdbg: sys.usb.config=${sys.usb.config} configfs=${sys.usb.configfs} controller=${sys.usb.controller}"
+# The stock Huawei recovery_vendor image is unpacked over this ramdisk; its teecd and keymaster HAL were built for the old Android 9
+# userspace ("CANNOT LINK ... libc_secshared.so / android.hardware.keymaster@3.0.so not found") and would respawn every 5 s. They are
+# only needed to decrypt /data, which this install does not use.
+# (The stock rc starts them after this file's actions have run, so stop them whenever they drop into the restart state too.)
+on boot
+    stop teecd
+    stop keymaster-3-0
 
-on property:sys.usb.ffs.ready=*
-    write /dev/kmsg "twrpdbg: sys.usb.ffs.ready=${sys.usb.ffs.ready} config=${sys.usb.config}"
-    exec u:r:recovery:s0 root root -- /system/bin/sh /system/bin/twrp_usb_dbg.sh
+on property:init.svc.teecd=restarting
+    stop teecd
+
+on property:init.svc.keymaster-3-0=restarting
+    stop keymaster-3-0
