@@ -1,7 +1,7 @@
 # System Partitions
 /cache		ext4		/dev/block/bootdevice/by-name/cache		flags=display="Cache";backup=1;wipeingui
 /cust		ext4		/dev/block/bootdevice/by-name/cust		flags=display="Cust";backup=1;flashimg
-/data		f2fs		/dev/block/bootdevice/by-name/userdata		flags=display="Data";backup=1;flashimg;settingsstorage;wipeingui
+/data		f2fs		/dev/block/bootdevice/by-name/userdata		flags=display="Data";fileencryption=aes-256-xts:aes-256-cts;backup=1;flashimg;settingsstorage;wipeingui
 /odm		ext4		/dev/block/bootdevice/by-name/odm		flags=display="Odm";backup=1;flashimg
 /kernel		emmc		/dev/block/bootdevice/by-name/kernel		flags=display="Kernel";backup=1;flashimg
 /ramdisk	emmc		/dev/block/bootdevice/by-name/ramdisk		flags=display="Ramdisk";backup=1;flashimg

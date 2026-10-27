@@ -86,3 +86,6 @@ TW_USE_NEW_MINADBD := true
 # SELinux: extra rules for the recovery policy (the recovery boots enforcing on a stock kernel)
 BOARD_SEPOLICY_DIRS += $(DEVICE_PATH)/sepolicy
 
+
+# Decryption of the ROM's FBE /data (fstab.hi6250 fileencryption=aes-256-xts:aes-256-cts, keys wrapped by the Huawei keymaster 3.0 HAL)
+TW_INCLUDE_CRYPTO := true

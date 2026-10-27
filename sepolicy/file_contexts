@@ -1,0 +1,3 @@
+/dev/tc_ns_client u:object_r:tee_client_device:s0
+/dev/hisi_teelog u:object_r:tee_client_device:s0
+/dev/hwlog_(jank|exception|dubai) u:object_r:hwlog_device:s0

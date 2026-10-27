@@ -3,6 +3,9 @@
 # TWRP's own policy (bootable/recovery/sepolicy/twrp.te) makes recovery, init, logd, adbd, fastbootd and ueventd permissive, which
 # is what lets TWRP work on a kernel that boots enforcing. The rules below (a) let the domains that are NOT permissive work, and
 # (b) grant what TWRP really does so a boot with SELinux enforcing produces no denials even if a domain is later made enforcing.
+type tee_client_device, dev_type;
+type hwlog_device, dev_type;
+
 recovery_only(`
   # --- the stock Huawei recovery_vendor image is unpacked into the same initramfs; its services (teecd, keymaster HAL) are files
   #     on rootfs that init starts with their vendor domains.
@@ -38,4 +41,20 @@ allow hal_keymaster_default self:capability sys_resource;
 allow ueventd self:capability sys_nice;
 allow kernel device:dir write;
 allow init kernel:system module_request;
+
+# Huawei TEE client device (was plain "device", so teecd could not open it once the kernel is really enforcing)
+allow tee tee_client_device:chr_file rw_file_perms;
+
+# keymaster HAL <-> the processes hosting hwservicemanager/keystore2 (labelled recovery here)
+allow hal_keymaster_default recovery:binder { call transfer };
+allow recovery hal_keymaster_default:binder { call transfer };
+
+# kernel-thread / init / modprobe accesses seen on a genuinely enforcing boot
+allow kernel block_device:dir search;
+allow kernel hwlog_device:chr_file { open write };
+allow kernel device:dir { write add_name remove_name };
+allow kernel self:capability mknod;
+allow vendor_init rootfs:dir { write add_name setattr remove_name };
+allow vendor_init proc_max_map_count:file write;
+allow modprobe rootfs:dir r_dir_perms;
 )
