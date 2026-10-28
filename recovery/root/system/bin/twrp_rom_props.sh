@@ -31,6 +31,13 @@ fi
 [ -n "$vspl" ] && resetprop ro.vendor.build.security_patch "$vspl"
 [ -z "$vspl" ] && [ -n "$spl" ] && resetprop ro.vendor.build.security_patch "$spl"
 echo "twrp_rom_props: release=$rel patch=$spl vendor_patch=$vspl" > /dev/kmsg
-# the HAL read its configuration when init started it in early-init
+# the HAL read its configuration when init started it in early-init. It now opens a TEE context at start-up, which needs the TEE daemons
+# (started from init.recovery.hi6250.rc) to be listening on their abstract sockets: wait for them (max 10 s), then restart the HAL.
+i=0
+while [ $i -lt 100 ]; do
+    grep -q 'tc_ns_socket_system' /proc/net/unix && grep -q '@tc_ns_socket$' /proc/net/unix && break
+    sleep 0.1; i=$((i+1))
+done
+echo "twrp_rom_props: tee daemons ready after $i x 0.1s" > /dev/kmsg
 stop keymaster-3-0
 start keymaster-3-0

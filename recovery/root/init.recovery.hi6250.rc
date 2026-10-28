@@ -21,6 +21,12 @@ on init
     write /dev/kmsg "twrp: init reached"
     # fscrypt v1 (this 4.4 kernel has no FS_IOC_ADD_ENCRYPTION_KEY): vold needs the "fscrypt" keyring in the session keyring
     install_keyring
+    # The keymaster HAL talks to the TEE (hardware keymaster, same as the ROM): libteec connects to teecd / system_teecd and
+    # they authenticate the caller by uid, so the HAL runs as system and the daemons have to be up before it opens its TEE context.
+    chown system system /dev/tc_ns_client
+    chmod 0660 /dev/tc_ns_client
+    start system_teecd
+    start teecd
     exec_start twrp_rom_props
     start twrp_cache_log
 
@@ -55,10 +61,14 @@ service teecd /vendor/bin/teecd
     disabled
     seclabel u:r:tee:s0
 
+# TEE keymaster: the EMUI8 keystore.hi6250.so module (from the ROM's vendor, same files) is used instead of the software keymaster, so keys that the
+# ROM created in the TEE can be unwrapped here. It links Android 9 libxcollie/libhwlog, which need libbase/liblog symbols that this Android 12 based
+# recovery does not have: libags2_compat.so (compat/ags2_compat.c) provides them. Runs as system like in the ROM (the TEE daemons check the uid).
 service keymaster-3-0 /vendor/bin/hw/android.hardware.keymaster@3.0-service
     class early_hal
-    user root
-    group root
+    user system
+    group system
+    setenv LD_PRELOAD /system/lib64/libags2_compat.so
     disabled
     seclabel u:r:hal_keymaster_default:s0
 
