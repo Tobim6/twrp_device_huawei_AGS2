@@ -60,7 +60,8 @@ BOARD_AVB_ENABLE := false
 BOARD_BUILD_SYSTEM_ROOT_IMAGE := false
 
 # TWRP
-TW_THEME := portrait_hdpi
+TW_THEME := landscape_hdpi
+TW_ROTATION := 90
 TW_DEVICE_VERSION := 1-AGS2
 TW_BRIGHTNESS_PATH := "/sys/class/leds/lcd_backlight0/brightness"
 TW_MAX_BRIGHTNESS := 10000
