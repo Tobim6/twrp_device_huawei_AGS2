@@ -29,6 +29,20 @@ recovery_only(`
   # dmesg and module autoload
   allow recovery self:capability2 syslog;
   allow recovery kernel:system { syslog_read module_request };
+
+  # --- genuinely enforcing boot (the kernel no longer shows androidboot.selinux=permissive): the keymaster/gatekeeper HALs that decrypt /data
+  allow { hal_keymaster_default hal_gatekeeper_default } tee:unix_stream_socket connectto;
+  allow { hal_keymaster_default hal_gatekeeper_default } tee:fd use;
+  allow { hal_keymaster_default hal_gatekeeper_default } rootfs:dir r_dir_perms;
+  allow { tee hal_keymaster_default hal_gatekeeper_default } default_prop:file { getattr open read map };
+  allow tee self:capability { sys_nice sys_ptrace };
+  # the TEE CA daemon identifies its clients through /proc/<pid>
+  allow tee { hal_keymaster_default hal_gatekeeper_default }:dir r_dir_perms;
+  allow tee { hal_keymaster_default hal_gatekeeper_default }:file r_file_perms;
+  allow tee { hal_keymaster_default hal_gatekeeper_default }:lnk_file r_file_perms;
+  allow kernel block_device:blk_file { read open getattr };
+  allow kernel device:chr_file { create setattr };
+  allow vendor_init rootfs:dir create;
 '
 
 # twrp_input_rescan.sh (bumps /dev/input mtime) and the boot-time kmsg marker
@@ -43,7 +57,7 @@ allow kernel device:dir write;
 allow init kernel:system module_request;
 
 # Huawei TEE client device (was plain "device", so teecd could not open it once the kernel is really enforcing)
-allow { tee hal_gatekeeper_default } tee_client_device:chr_file rw_file_perms;
+allow { tee hal_keymaster_default hal_gatekeeper_default } tee_client_device:chr_file rw_file_perms;
 
 # keymaster HAL <-> the processes hosting hwservicemanager/keystore2 (labelled recovery here)
 allow { hal_keymaster_default hal_gatekeeper_default } recovery:binder { call transfer };

@@ -1,0 +1,12 @@
+diff --git a/private/domain.te b/private/domain.te
+index b91d36d..113cc25 100644
+--- a/private/domain.te
++++ b/private/domain.te
+@@ -123,6 +123,7 @@ neverallow {
+   userdebug_or_eng(`-profcollectd')
+   -storaged
+   -system_server
++  -tee # AGS2 recovery: the Huawei TEE CA daemon identifies its clients through /proc/<pid>
+ } self:global_capability_class_set sys_ptrace;
+ 
+ # Limit ability to generate hardware unique device ID attestations to priv_apps
